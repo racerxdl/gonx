@@ -1,2 +1,3 @@
-# gonx
-libnx wrapper for tinygo
+# Golang libnx wrapper for tinygo
+
+This library requires tinygo with libnx
