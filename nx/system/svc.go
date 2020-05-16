@@ -25,11 +25,11 @@ func SvcBreak(reason uint32, a, b uint64)
 
 // Result svcOutputDebugString(const char *str, u64 size)
 //go:export svcOutputDebugString
-func svcOutputDebugString(str unsafe.Pointer, size uint64) Result
+func svcOutputDebugString(str unsafe.Pointer, size uint64) int64
 
 
 // SvcOutputDebugString outputs a debug string on Emulator Console
 func SvcOutputDebugString(data string) Result {
     sh := (*reflect.StringHeader)(unsafe.Pointer(&data))
-    return svcOutputDebugString(unsafe.Pointer(sh.Data), uint64(sh.Len))
+    return Result(svcOutputDebugString(unsafe.Pointer(sh.Data), uint64(sh.Len)))
 }

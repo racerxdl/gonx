@@ -22,6 +22,7 @@ func (w *Window) MakeFramebuffer(width, height, numFbs uint32, format PixelForma
 	fb.width = width
 	fb.height = height
 	fb.format = format
+	fb.buildBuffer()
 
 	r := internal.FramebufferCreate(fb.ptr(), w.ptr, width, height, uint32(format), numFbs)
 	if r != system.ResultOK {

@@ -14,6 +14,7 @@ type Framebuffer struct {
 	height     uint32
 	width      uint32
 	format     PixelFormat
+	frame      *RGBAFBImage
 }
 
 func makeEmptyFB() *Framebuffer {
@@ -24,6 +25,15 @@ func makeEmptyFB() *Framebuffer {
 
 func (fb *Framebuffer) ptr() unsafe.Pointer {
 	return fb.nativeBuff
+}
+
+func (fb *Framebuffer) buildBuffer() {
+	fb.frame = &RGBAFBImage{
+		parentPtr: fb.ptr(),
+		m: &image.RGBA{
+			Rect: image.Rect(0, 0, int(fb.width), int(fb.height)),
+		},
+	}
 }
 
 // MakeLinear Enables linear framebuffer mode in a Framebuffer, allocating a shadow buffer in the process.
@@ -40,27 +50,22 @@ func (fb *Framebuffer) Close() error {
 
 // StartFrameAsRGBA starts the frame as RGBA Image. Returns an error if image is not RGBA8888
 // You must call .End() on generated frame to swap buffers
-func (fb *Framebuffer) StartFrameAsRGBA() (RGBAFBImage, error) {
+func (fb *Framebuffer) StartFrameAsRGBA() (*RGBAFBImage, error) {
 	if fb.format != PixelFormatRgba8888 {
-		return RGBAFBImage{}, fmt.Errorf("RGBA image requires RGBA8888 framebuffer format")
+		return nil, fmt.Errorf("RGBA image requires RGBA8888 framebuffer format")
 	}
 
-	v := RGBAFBImage{
-		parentPtr: fb.ptr(),
-	}
 	stride := uint32(0)
 
 	vptr := internal.FramebufferBegin(fb.ptr(), unsafe.Pointer(&stride))
 	if vptr == nil {
-		return RGBAFBImage{}, fmt.Errorf("error starting framebuffer")
+		return nil, fmt.Errorf("error starting framebuffer")
 	}
 
 	bufLen := fb.height * stride
-	v.RGBA = &image.RGBA{
-		Pix:    internal.PointerToByteSlice(vptr, bufLen),
-		Stride: int(stride),
-		Rect:   image.Rect(0, 0, int(fb.width), int(fb.height)),
-	}
+	fb.frame.imgPtr = vptr
+	fb.frame.m.Pix = internal.PointerToByteSlice(vptr, bufLen)
+	fb.frame.m.Stride = int(stride)
 
-	return v, nil
+	return fb.frame, nil
 }
