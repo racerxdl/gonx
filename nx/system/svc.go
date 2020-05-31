@@ -3,6 +3,7 @@
 package system
 
 import (
+    _ "github.com/racerxdl/gonx"
     "reflect"
     "unsafe"
 )
@@ -20,11 +21,11 @@ const (
 )
 
 // Result svcBreak(u32 breakReason, u64 inval1, u64 inval2);
-//go:export svcBreak
+//export svcBreak
 func SvcBreak(reason uint32, a, b uint64)
 
 // Result svcOutputDebugString(const char *str, u64 size)
-//go:export svcOutputDebugString
+//export svcOutputDebugString
 func svcOutputDebugString(str unsafe.Pointer, size uint64) int64
 
 
@@ -33,3 +34,17 @@ func SvcOutputDebugString(data string) Result {
     sh := (*reflect.StringHeader)(unsafe.Pointer(&data))
     return Result(svcOutputDebugString(unsafe.Pointer(sh.Data), uint64(sh.Len)))
 }
+
+func Printf(msg string) {
+    msg = msg + "\x00"
+    sh := (*reflect.StringHeader)(unsafe.Pointer(&msg))
+    printf(unsafe.Pointer(sh.Data))
+}
+
+//export printf
+func printf(str unsafe.Pointer)
+
+////e    xport nxzinit
+//var zinit = func() {
+//    SvcBreak(1234,1234,1234)
+//}
