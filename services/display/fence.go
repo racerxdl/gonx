@@ -1,9 +1,9 @@
 package display
 
 import (
-	"github.com/racerxdl/gonx/nx/gpu"
 	"github.com/racerxdl/gonx/nx/nxerrors"
-	"github.com/racerxdl/gonx/nx/vi"
+	"github.com/racerxdl/gonx/services/gpu"
+	"github.com/racerxdl/gonx/services/vi"
 	"unsafe"
 )
 

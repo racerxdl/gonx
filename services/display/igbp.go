@@ -2,9 +2,9 @@ package display
 
 import (
 	"fmt"
-	"github.com/racerxdl/gonx/nx/internal"
+	"github.com/racerxdl/gonx/internal"
 	"github.com/racerxdl/gonx/nx/nxerrors"
-	"github.com/racerxdl/gonx/nx/vi"
+	"github.com/racerxdl/gonx/services/vi"
 	"unsafe"
 )
 

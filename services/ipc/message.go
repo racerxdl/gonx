@@ -1,6 +1,8 @@
 package ipc
 
-import "github.com/racerxdl/gonx/nx/nxtypes"
+import (
+	"github.com/racerxdl/gonx/nx/nxtypes"
+)
 
 // PackedMessage represents a IPC Message Data to be packed
 type PackedMessage struct {

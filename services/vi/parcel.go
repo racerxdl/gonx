@@ -2,7 +2,7 @@ package vi
 
 import (
 	"encoding/binary"
-	"github.com/racerxdl/gonx/nx/internal"
+	"github.com/racerxdl/gonx/internal"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"unsafe"
 )
@@ -144,7 +144,7 @@ func ParcelLoad(flattened []byte) (*Parcel, error) {
 		return nil, nxerrors.ParcelDataTooBig
 	}
 
-	copy(p.Contents.Payload[:p.Contents.ObjectsSize], flattened[p.Contents.DataOffset:])
+	copy(p.Contents.Payload[:], flattened[p.Contents.DataOffset:])
 
 	p.WriteHead = int(p.Contents.DataSize)
 	p.ReadHead = 0

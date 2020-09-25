@@ -3,10 +3,10 @@ package vi
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/racerxdl/gonx/nx/internal"
-	"github.com/racerxdl/gonx/nx/ipc"
+	"github.com/racerxdl/gonx/internal"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
+	"github.com/racerxdl/gonx/services/ipc"
 	"unsafe"
 )
 
@@ -104,7 +104,7 @@ func OpenLayer(displayName string, layerId uint64, aruid nxtypes.ARUID) (*IGBP, 
 		return nil, nxerrors.VINotInitialized
 	}
 
-	parcelBuff := make([]byte, 0x210)
+	parcelBuff := [0x210]byte{}
 
 	ipcBuff := &ipc.Buffer{
 		Addr: uintptr(unsafe.Pointer(&parcelBuff[0])),
@@ -139,7 +139,7 @@ func OpenLayer(displayName string, layerId uint64, aruid nxtypes.ARUID) (*IGBP, 
 		return nil, err
 	}
 
-	p, err := ParcelLoad(parcelBuff)
+	p, err := ParcelLoad(parcelBuff[:])
 	if err != nil {
 		return nil, err
 	}
@@ -212,5 +212,5 @@ func IadsSetLayerScalingMode(scalingMode uint32, layerId uint64) error {
 
 	rs := ipc.ResponseFmt{}
 
-	return ipc.Send(imdsObject, &rq, &rs)
+	return ipc.Send(iadsObject, &rq, &rs)
 }

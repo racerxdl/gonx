@@ -5,8 +5,10 @@ package svc
 
 import (
 	"fmt"
+	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
 	"runtime"
+	"time"
 	"unsafe"
 )
 
@@ -46,6 +48,33 @@ func CreateTransferMemory(handle *nxtypes.Handle, addr uintptr, size uintptr, pe
 // svc 0x03
 func SetMemoryAttribute(addr uintptr, size uintptr, state0, state1 uint32) uint64 {
 	return runtime.SvcSetMemoryAttribute(addr, size, state0, state1)
+}
+
+// WaitSynchronization Waits the specified handles to be finished or the specified timeout
+// Returns the Handle Index and error if timeout
+// svc 0x18
+func WaitSynchronization(handles []nxtypes.Handle, timeout time.Duration) (uint32, error) {
+	index := uint32(0)
+	handlesPtr := (*uint32)(unsafe.Pointer(&handles[0]))
+	r := runtime.SvcWaitSynchronization(&index, handlesPtr, int32(len(handles)), uint64(timeout))
+	if r != nxtypes.ResultOK {
+		return index, nxerrors.Timeout
+	}
+
+	return index, nil
+}
+
+// WaitSynchronization Waits a single handle to be finished with the specified timeout
+// Calls WaitSynchronization
+func WaitSynchronizationSingle(handle nxtypes.Handle, timeout time.Duration) error {
+	index := uint32(0)
+	handlePtr := (*uint32)(unsafe.Pointer(&handle))
+	r := runtime.SvcWaitSynchronization(&index, handlePtr, 1, uint64(timeout))
+	if r != nxtypes.ResultOK {
+		return nxerrors.Timeout
+	}
+
+	return nil
 }
 
 func GetIPCBuffer() *[64]uint32 {

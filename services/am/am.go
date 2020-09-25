@@ -1,10 +1,10 @@
 package am
 
 import (
-	"github.com/racerxdl/gonx/nx/ipc"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
-	"github.com/racerxdl/gonx/nx/sm"
+	"github.com/racerxdl/gonx/services/ipc"
+	"github.com/racerxdl/gonx/services/sm"
 )
 
 var amInitializations = 0

@@ -3,15 +3,15 @@ package nv
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/racerxdl/gonx/nx/ipc"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
-	"github.com/racerxdl/gonx/nx/sm"
-	"github.com/racerxdl/gonx/nx/svc"
+	"github.com/racerxdl/gonx/services/ipc"
+	"github.com/racerxdl/gonx/services/sm"
+	"github.com/racerxdl/gonx/svc"
 	"unsafe"
 )
 
-const nvDebug = true
+const nvDebug = false
 const transferMemSize = 3 * 1024 * 1024
 
 //go:align 4096
@@ -56,7 +56,6 @@ func Init() (err error) {
 	}()
 
 	err = sm.Init()
-
 	if err != nil {
 		return fmt.Errorf("error initializing sm: %s", err)
 	}

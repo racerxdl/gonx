@@ -2,8 +2,8 @@ package am
 
 import (
 	"encoding/binary"
-	"github.com/racerxdl/gonx/nx/ipc"
 	"github.com/racerxdl/gonx/nx/nxerrors"
+	"github.com/racerxdl/gonx/services/ipc"
 )
 
 func IscCreateManagedDisplayLayer() (uint64, error) {

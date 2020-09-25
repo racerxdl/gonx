@@ -13,12 +13,12 @@ func (b *Binder) AdjustRefCount(addVal, Type int32) error {
 type FlatBinderObject struct {
 	Type    uint32
 	Flags   uint32
-	Content uintptr // union of void *binder and int32 Handle
-	Cookie  uintptr
+	Content uint64 // union of void *binder and int32 Handle
+	Cookie  uint64
 }
 
 func (fb *FlatBinderObject) GetBinder() uintptr {
-	return fb.Content
+	return uintptr(fb.Content)
 }
 
 func (fb *FlatBinderObject) GetHandle() int32 {

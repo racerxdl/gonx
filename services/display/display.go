@@ -1,14 +1,15 @@
 package display
 
 import (
-	"github.com/racerxdl/gonx/nx/am"
-	"github.com/racerxdl/gonx/nx/gpu"
+	"fmt"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
-	"github.com/racerxdl/gonx/nx/vi"
+	"github.com/racerxdl/gonx/services/am"
+	"github.com/racerxdl/gonx/services/gpu"
+	"github.com/racerxdl/gonx/services/vi"
 )
 
-const debugDisplay = true
+const debugDisplay = false
 
 var display *vi.Display
 var displayInitializations = 0
@@ -171,7 +172,7 @@ func OpenLayer() (surface *Surface, err error) {
 	managedLayerInit = true
 
 	if debugDisplay {
-		println("Display::OpenLayer() - OpenLayer")
+		fmt.Printf("Display::OpenLayer() - OpenLayer(\"Default\", %d, %d)\n", layerId, aruid)
 	}
 	igbp, err = vi.OpenLayer("Default", layerId, aruid)
 	if err != nil {
@@ -180,7 +181,7 @@ func OpenLayer() (surface *Surface, err error) {
 	igbpInit = true
 
 	if debugDisplay {
-		println("Display::OpenLayer() - Surface Create")
+		println("Display::OpenLayer() - SurfaceCreate")
 	}
 	surface, _, err = SurfaceCreate(layerId, *igbp)
 	if err != nil {

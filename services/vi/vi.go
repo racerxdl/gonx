@@ -2,15 +2,15 @@ package vi
 
 import (
 	"fmt"
-	"github.com/racerxdl/gonx/nx/internal"
-	"github.com/racerxdl/gonx/nx/ipc"
+	"github.com/racerxdl/gonx/internal"
 	"github.com/racerxdl/gonx/nx/nxerrors"
-	"github.com/racerxdl/gonx/nx/sm"
+	"github.com/racerxdl/gonx/services/ipc"
+	"github.com/racerxdl/gonx/services/sm"
 	"unsafe"
 )
 
 const (
-	viDebug = true
+	viDebug = false
 )
 
 var viDomain *ipc.Domain

@@ -15,6 +15,7 @@ const (
 	NotImplemented            = constError("not implemented")
 	OutOfMemory               = constError("out of memory")
 	CannotSetMemoryAttributes = constError("cannot set memory attributes")
+	Timeout                   = constError("timeout")
 )
 
 // IPC Errors

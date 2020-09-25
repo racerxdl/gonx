@@ -2,7 +2,7 @@ package graphics
 
 import (
 	"fmt"
-	"github.com/racerxdl/gonx/nx/internal"
+	"github.com/racerxdl/gonx/internal"
 	"github.com/racerxdl/gonx/nx/system"
 	"unsafe"
 )

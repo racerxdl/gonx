@@ -1,6 +1,8 @@
 package ipc
 
-import "github.com/racerxdl/gonx/nx/nxtypes"
+import (
+	"github.com/racerxdl/gonx/nx/nxtypes"
+)
 
 // ResponseFmt Describes format expectations for an incoming IPC response
 //

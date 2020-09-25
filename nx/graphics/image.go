@@ -1,7 +1,7 @@
 package graphics
 
 import (
-	"github.com/racerxdl/gonx/nx/internal"
+	"github.com/racerxdl/gonx/internal"
 	"image"
 	"image/color"
 	"unsafe"

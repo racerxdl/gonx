@@ -1,12 +1,13 @@
 package display
 
 import (
-	"github.com/racerxdl/gonx/nx/gpu"
+	"fmt"
 	"github.com/racerxdl/gonx/nx/memory"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
-	"github.com/racerxdl/gonx/nx/svc"
-	"github.com/racerxdl/gonx/nx/vi"
+	"github.com/racerxdl/gonx/services/gpu"
+	"github.com/racerxdl/gonx/services/vi"
+	"github.com/racerxdl/gonx/svc"
 	"image"
 	"unsafe"
 )
@@ -24,7 +25,7 @@ type Surface struct {
 	LayerId      uint64
 	IGBP         vi.IGBP
 	State        SurfaceState
-	HasRequested [2]bool
+	HasRequested [3]bool
 	CurrentSlot  uint32
 
 	GpuBuffer            *gpu.Buffer
@@ -128,11 +129,15 @@ func (s *Surface) QueueBuffer() error {
 }
 
 func SurfaceCreate(layerId uint64, igbp vi.IGBP) (surface *Surface, status int, err error) {
+	if debugDisplay {
+		fmt.Printf("Display::SurfaceCreate(%d, %d)\n", layerId, igbp.IgbpBinder.Handle)
+	}
 	surface = &Surface{
-		LayerId:     layerId,
-		IGBP:        igbp,
-		State:       SURFACE_STATE_INVALID,
-		CurrentSlot: 0,
+		LayerId:        layerId,
+		IGBP:           igbp,
+		State:          SURFACE_STATE_INVALID,
+		CurrentSlot:    0,
+		GraphicBuffers: [3]GraphicBuffer{},
 	}
 
 	memoryAttributesSet := false
@@ -204,8 +209,14 @@ func (s *Surface) refreshFrame(f *Frame) error {
 	f.surfaceBuff = data
 	f.bounds = image.Rect(0, 0, int(s.GraphicBuffers[slot].Width), int(s.GraphicBuffers[slot].Height))
 
-	if len(f.buff) != len(data) {
-		f.buff = make([]byte, len(data))
+	b := f.bounds.Size()
+	l := b.X * b.Y * 4 // uint32 per pixel
+
+	if len(f.buff) != l {
+		if debugDisplay {
+			fmt.Printf("Allocating buffer of %d bytes\n", l)
+		}
+		f.buff = make([]byte, l)
 	}
 
 	return nil

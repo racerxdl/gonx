@@ -1,12 +1,12 @@
 package gpu
 
 import (
-	"github.com/racerxdl/gonx/nx/nv"
 	"github.com/racerxdl/gonx/nx/nxerrors"
+	"github.com/racerxdl/gonx/services/nv"
 	"unsafe"
 )
 
-const gpuDebug = true
+const gpuDebug = false
 
 var (
 	nvasFd             int32
