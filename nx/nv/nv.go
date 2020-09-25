@@ -11,6 +11,7 @@ import (
 	"unsafe"
 )
 
+const nvDebug = true
 const transferMemSize = 3 * 1024 * 1024
 
 //go:align 4096
@@ -21,6 +22,9 @@ var transferMem = nxtypes.Handle(0)
 var nvInitializations = 0
 
 func Init() (err error) {
+	if nvDebug {
+		println("NV::Init()")
+	}
 	nvInitializations++
 
 	if nvInitializations > 1 {
@@ -98,12 +102,20 @@ func Init() (err error) {
 }
 
 func nvForceFinalize() {
-	svc.CloseHandle(transferMem)
+	if nvDebug {
+		println("NV::ForceFinalize()")
+	}
+	if transferMem != 0 {
+		svc.CloseHandle(transferMem)
+	}
 	_ = ipc.Close(nvObject)
 	nvInitializations = 0
 }
 
 func Finalize() {
+	if nvDebug {
+		println("NV::Finalize()")
+	}
 	nvInitializations--
 	if nvInitializations <= 0 {
 		nvForceFinalize()
@@ -111,6 +123,9 @@ func Finalize() {
 }
 
 func Open(path string) (int32, error) {
+	if nvDebug {
+		fmt.Printf("NV::Open(%s)\n", path)
+	}
 	if nvInitializations <= 0 {
 		return -1, nxerrors.NVNotInitialized
 	}
@@ -146,6 +161,9 @@ func Open(path string) (int32, error) {
 }
 
 func Close(fd int32) error {
+	if nvDebug {
+		fmt.Printf("NV::Close(%d)\n", fd)
+	}
 	if nvInitializations <= 0 {
 		return nxerrors.NVNotInitialized
 	}
@@ -170,8 +188,11 @@ func Close(fd int32) error {
 }
 
 func Ioctl(fd int32, rqid uint32, arg unsafe.Pointer, size uintptr) (uint32, error) {
+	if nvDebug {
+		fmt.Printf("NV::Ioctl(%d, %d, %p, %d)\n", fd, rqid, arg, size)
+	}
 	if nvInitializations <= 0 {
-		return -1, nxerrors.NVNotInitialized
+		return 0xFFFFFFFF, nxerrors.NVNotInitialized
 	}
 	InB := ipc.Buffer{
 		Addr: uintptr(arg),

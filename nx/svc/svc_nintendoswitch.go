@@ -42,6 +42,12 @@ func CreateTransferMemory(handle *nxtypes.Handle, addr uintptr, size uintptr, pe
 	return runtime.SvcCreateTransferMemory(r, addr, size, perm)
 }
 
+// SetMemoryAttribute Sets memory attributes
+// svc 0x03
+func SetMemoryAttribute(addr uintptr, size uintptr, state0, state1 uint32) uint64 {
+	return runtime.SvcSetMemoryAttribute(addr, size, state0, state1)
+}
+
 func GetIPCBuffer() *[64]uint32 {
 	return &runtime.GetTLS().IPCBuffer
 }

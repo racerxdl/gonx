@@ -284,7 +284,6 @@ func PackIPCRequest(rq *Request, object Object, marshalBuffer *[0x40]uint32) err
 	}
 
 	msg.Type = rq.Type
-
 	moveHandles := make([]nxtypes.Handle, 0, maxIPCDescriptors)
 
 	if !toDomain {
@@ -751,7 +750,13 @@ func Close(object Object) error {
 		svc.DumpIPCBuffer()
 	}
 
-	r := svc.SendSyncRequest(uint64(object.GetDomain().Session))
+	d := object.GetDomain()
+
+	if d == nil {
+		return nxerrors.InvalidDomain
+	}
+
+	r := svc.SendSyncRequest(uint64(d.Session))
 	if r > 0 {
 		if debug {
 			println("ipc: error sending request")

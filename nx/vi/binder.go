@@ -2,18 +2,18 @@ package vi
 
 // Binder Represents a remote interface
 type Binder struct {
-	handle int32
+	Handle int32
 }
 
 func (b *Binder) AdjustRefCount(addVal, Type int32) error {
-	return AdjustRefCount(b.handle, addVal, Type)
+	return AdjustRefCount(b.Handle, addVal, Type)
 }
 
 // FlatBinderObject Binder object as included in a Parcel
 type FlatBinderObject struct {
 	Type    uint32
 	Flags   uint32
-	Content uintptr // union of void *binder and int32 handle
+	Content uintptr // union of void *binder and int32 Handle
 	Cookie  uintptr
 }
 
@@ -30,7 +30,7 @@ func BinderTransactParcel(binder Binder, transaction, flags uint32, in *Parcel) 
 
 	buff := make([]byte, 0x210)
 
-	err := TransactParcel(binder.handle, transaction, flags, inFlattened, buff)
+	err := TransactParcel(binder.Handle, transaction, flags, inFlattened, buff)
 	if err != nil {
 		return nil, err
 	}

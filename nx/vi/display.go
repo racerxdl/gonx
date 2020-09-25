@@ -2,6 +2,7 @@ package vi
 
 import (
 	"encoding/binary"
+	"fmt"
 	"github.com/racerxdl/gonx/nx/internal"
 	"github.com/racerxdl/gonx/nx/ipc"
 	"github.com/racerxdl/gonx/nx/nxerrors"
@@ -15,18 +16,25 @@ type Display struct {
 }
 
 func OpenDisplay(name string) (*Display, error) {
+	if viDebug {
+		fmt.Printf("VI::OpenDisplay(%s)\n", name)
+	}
 	if viInitializations <= 0 {
 		return nil, nxerrors.VINotInitialized
 	}
 
 	raw := make([]byte, 0x40)
 	copy(raw, name)
-	l := len(name)
+	l := len(name) + 1
 	if l > 0x40 {
 		l = 0x40
 	}
 	raw[l-1] = 0x00 // force null-terminated
 
+	if viDebug {
+		println("VI::OpenDisplay() - IPC Call")
+		fmt.Printf("%+v\n", raw)
+	}
 	rq := ipc.MakeDefaultRequest(requestOpenDisplay)
 	rq.RawData = raw
 
@@ -37,6 +45,9 @@ func OpenDisplay(name string) (*Display, error) {
 
 	err := ipc.Send(iadsObject, &rq, &rs)
 	if err != nil {
+		if viDebug {
+			fmt.Printf("Error calling IPC: %s\n", err)
+		}
 		return nil, err
 	}
 
@@ -46,6 +57,9 @@ func OpenDisplay(name string) (*Display, error) {
 }
 
 func CloseDisplay(d *Display) error {
+	if viDebug {
+		fmt.Printf("VI::CloseDisplay(%d)\n", d.ID)
+	}
 	if viInitializations <= 0 {
 		return nxerrors.VINotInitialized
 	}
@@ -59,6 +73,9 @@ func CloseDisplay(d *Display) error {
 }
 
 func GetDisplayVsyncEvent(d *Display) error {
+	if viDebug {
+		fmt.Printf("VI::GetDisplayVsyncEvent(%d)\n", d.ID)
+	}
 	if viInitializations <= 0 {
 		return nxerrors.VINotInitialized
 	}
@@ -79,7 +96,10 @@ func GetDisplayVsyncEvent(d *Display) error {
 	return nil
 }
 
-func OpenLayer(displayName string, layerId, aruid uint64) (*IGBP, error) {
+func OpenLayer(displayName string, layerId uint64, aruid nxtypes.ARUID) (*IGBP, error) {
+	if viDebug {
+		fmt.Printf("VI::OpenLayer(%s, %d, %d)\n", displayName, layerId, aruid)
+	}
 	if viInitializations <= 0 {
 		return nil, nxerrors.VINotInitialized
 	}
@@ -95,7 +115,7 @@ func OpenLayer(displayName string, layerId, aruid uint64) (*IGBP, error) {
 	rqArgs := struct {
 		displayName [0x40]byte
 		layerId     uint64
-		aruid       uint64
+		aruid       nxtypes.ARUID
 	}{}
 
 	rqArgs.layerId = layerId
@@ -130,15 +150,16 @@ func OpenLayer(displayName string, layerId, aruid uint64) (*IGBP, error) {
 	}
 
 	igbp := &IGBP{
-		igbpBinder: Binder{
-			handle: b.handle,
-		},
+		IgbpBinder: *b,
 	}
 
 	return igbp, nil
 }
 
 func CloseLayer(layerId uint64) error {
+	if viDebug {
+		fmt.Printf("VI::CloseLayer(%d)\n", layerId)
+	}
 	if viInitializations <= 0 {
 		return nxerrors.VINotInitialized
 	}
@@ -149,4 +170,47 @@ func CloseLayer(layerId uint64) error {
 	rs := ipc.ResponseFmt{}
 
 	return ipc.Send(iadsObject, &rq, &rs)
+}
+
+func DestroyManagedLayer(layerId uint64) error {
+	if viDebug {
+		fmt.Printf("VI::DestroyManagedLayer(%d)\n", layerId)
+	}
+	if viInitializations <= 0 {
+		return nxerrors.VINotInitialized
+	}
+
+	rq := ipc.MakeDefaultRequest(requestDestroyManagedLayer)
+	rq.SetRawDataFromUint64(layerId)
+
+	rs := ipc.ResponseFmt{}
+
+	return ipc.Send(imdsObject, &rq, &rs)
+}
+
+func IadsSetLayerScalingMode(scalingMode uint32, layerId uint64) error {
+	if viDebug {
+		fmt.Printf("VI::IadsSetLayerScalingMode(%d, %d)\n", scalingMode, layerId)
+	}
+	if viInitializations <= 0 {
+		return nxerrors.VINotInitialized
+	}
+
+	params := struct {
+		scalingMode uint32
+		layerId     uint64
+	}{
+		scalingMode: scalingMode,
+		layerId:     layerId,
+	}
+
+	buff := make([]byte, unsafe.Sizeof(params))
+	internal.Memcpy(unsafe.Pointer(&buff[0]), unsafe.Pointer(&params), uintptr(len(buff)))
+
+	rq := ipc.MakeDefaultRequest(requestSetLayerScalingMode)
+	rq.RawData = buff
+
+	rs := ipc.ResponseFmt{}
+
+	return ipc.Send(imdsObject, &rq, &rs)
 }

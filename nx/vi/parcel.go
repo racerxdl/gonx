@@ -51,7 +51,7 @@ func (p *Parcel) ReadBinder() (*Binder, error) {
 	internal.Memcpy(unsafe.Pointer(&fbo), unsafe.Pointer(&d[0]), uintptr(len(d)))
 
 	binder := &Binder{}
-	binder.handle = fbo.GetHandle()
+	binder.Handle = fbo.GetHandle()
 
 	err := binder.AdjustRefCount(1, 0)
 	if err != nil {
@@ -91,6 +91,46 @@ func (p *Parcel) FinalizeWriting() ([]byte, int) {
 	internal.Memcpy(unsafe.Pointer(&buff[0]), unsafe.Pointer(&p.Contents), uintptr(len(buff)))
 
 	return buff, int(0x10 + p.WriteHead)
+}
+
+func (p *Parcel) WriteInPlace(data []byte) {
+	copy(p.Contents.Payload[p.WriteHead:], data)
+	p.WriteHead += (len(data) + 3) & int(^3) // Alignment
+}
+
+func (p *Parcel) WriteInPlaceU16(data []uint16) {
+	internal.Memcpy(unsafe.Pointer(&p.Contents.Payload[p.WriteHead]), unsafe.Pointer(&data[0]), uintptr(len(data)*2))
+	dLen := len(data) * 2
+	p.WriteHead += (dLen + 3) & int(^3) // Alignment
+}
+
+func (p *Parcel) WriteInPlaceU32(data []uint32) {
+	internal.Memcpy(unsafe.Pointer(&p.Contents.Payload[p.WriteHead]), unsafe.Pointer(&data[0]), uintptr(len(data)*4))
+	dLen := len(data) * 4
+	p.WriteHead += (dLen + 3) & int(^3) // Alignment
+}
+
+func (p *Parcel) WriteU32(v uint32) {
+	p.Contents.Payload[p.WriteHead] = byte(v)
+	p.Contents.Payload[p.WriteHead+1] = byte(v >> 8)
+	p.Contents.Payload[p.WriteHead+2] = byte(v >> 16)
+	p.Contents.Payload[p.WriteHead+3] = byte(v >> 24)
+	p.WriteHead += 4
+}
+
+func (p *Parcel) WriteString16(data string) {
+	strlen := len(data)
+	p.WriteU32(uint32(strlen))
+	b := make([]uint16, strlen+1)
+	for i, v := range data {
+		b[i] = uint16(v)
+	}
+	p.WriteInPlaceU16(b)
+}
+
+func (p *Parcel) WriteInterfaceToken(token string) {
+	p.WriteU32(0x100)
+	p.WriteString16(token)
 }
 
 func ParcelLoad(flattened []byte) (*Parcel, error) {

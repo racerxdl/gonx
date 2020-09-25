@@ -7,10 +7,10 @@ import (
 )
 
 type Buffer struct {
-	nvMapHandle uint32
-	size        uintptr
-	alignment   uint32
-	kind        uint8
+	NvMapHandle uint32
+	Size        uintptr
+	Alignment   uint32
+	Kind        uint8
 }
 
 func InitializeFromId(id uint32) (*Buffer, error) {
@@ -36,10 +36,10 @@ func InitializeFromId(id uint32) (*Buffer, error) {
 		}
 	}
 
-	buff.nvMapHandle = nvIocFromIdArgs.handle
+	buff.NvMapHandle = nvIocFromIdArgs.handle
 
 	nvParam := nvmapIocParamArgs{
-		handle: buff.nvMapHandle,
+		handle: buff.NvMapHandle,
 		param:  1, // SIZE
 	}
 
@@ -55,7 +55,7 @@ func InitializeFromId(id uint32) (*Buffer, error) {
 		}
 	}
 
-	buff.size = uintptr(nvParam.value)
+	buff.Size = uintptr(nvParam.value)
 
 	nvParam.param = 2 // ALIGNMENT
 	handle, err = nv.Ioctl(nvmapFd, NVMAP_IOC_PARAM, unsafe.Pointer(&nvParam), unsafe.Sizeof(nvParam))
@@ -70,7 +70,7 @@ func InitializeFromId(id uint32) (*Buffer, error) {
 		}
 	}
 
-	buff.alignment = nvParam.value
+	buff.Alignment = nvParam.value
 
 	nvParam.param = 5 // KIND
 	handle, err = nv.Ioctl(nvmapFd, NVMAP_IOC_PARAM, unsafe.Pointer(&nvParam), unsafe.Sizeof(nvParam))
@@ -85,7 +85,7 @@ func InitializeFromId(id uint32) (*Buffer, error) {
 		}
 	}
 
-	buff.kind = uint8(nvParam.value)
+	buff.Kind = uint8(nvParam.value)
 
 	return buff, nil
 }
@@ -96,7 +96,7 @@ func (b *Buffer) GetID() (id uint32, err error) {
 	}
 
 	nvIdArgs := nvmapIocGetIdArgs{
-		handle: b.nvMapHandle,
+		handle: b.NvMapHandle,
 	}
 
 	handle, err := nv.Ioctl(nvmapFd, NVMAP_IOC_GET_ID, unsafe.Pointer(&nvIdArgs), unsafe.Sizeof(nvIdArgs))
@@ -120,7 +120,7 @@ func (b *Buffer) Destroy() (refCount uint32, flags uint32, err error) {
 	}
 
 	nvmFree := nvmapIocFreeArgs{
-		handle: b.nvMapHandle,
+		handle: b.NvMapHandle,
 	}
 
 	handle, err := nv.Ioctl(nvmapFd, NVMAP_IOC_FREE, unsafe.Pointer(&nvmFree), unsafe.Sizeof(nvmFree))
@@ -152,9 +152,9 @@ func CreateBuffer(addr unsafe.Pointer, size uintptr, heapMask uint32, flags uint
 	}
 
 	gpuB := &Buffer{
-		size:      size,
-		kind:      kind,
-		alignment: alignment,
+		Size:      size,
+		Kind:      kind,
+		Alignment: alignment,
 	}
 
 	nvmCreate := nvmapIocCreateArgs{
@@ -172,7 +172,7 @@ func CreateBuffer(addr unsafe.Pointer, size uintptr, heapMask uint32, flags uint
 		}
 	}
 
-	gpuB.nvMapHandle = nvmCreate.handle
+	gpuB.NvMapHandle = nvmCreate.handle
 
 	nvmAlloc := nvmapIocAllocArgs{
 		handle:   nvmCreate.handle,

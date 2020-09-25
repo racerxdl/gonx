@@ -1,6 +1,7 @@
 package sm
 
 import (
+	"fmt"
 	"github.com/racerxdl/gonx/nx/ipc"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
@@ -12,6 +13,7 @@ var smObject ipc.Object
 
 const (
 	smServiceName = "sm:\x00"
+	debugSm       = true
 )
 
 // str2u64 converts a string to uint64 representation
@@ -32,6 +34,9 @@ func str2u64(str string) uint64 {
 
 // Init initializes the SM Service if needed
 func Init() error {
+	if debugSm {
+		println("SM::Init")
+	}
 	if smInitializations > 0 {
 		smInitializations++ // Already initialized, increment ref count
 		return nil
@@ -62,6 +67,9 @@ func Init() error {
 
 	err := ipc.Send(smObject, &rq, &rs)
 	if err != nil {
+		if debugSm {
+			fmt.Printf("error initializing sm: %s", err)
+		}
 		_ = ipc.Close(smObject)
 		smInitializations--
 		return err
@@ -84,6 +92,9 @@ func smForceFinalize() {
 }
 
 func GetService(outObject *ipc.Object, name string) error {
+	if debugSm {
+		fmt.Printf("SM::GetService(%p, %s)\n", outObject, name)
+	}
 	if smObject.GetSession() == 0 {
 		return nxerrors.SmNotInitialized
 	}

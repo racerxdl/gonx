@@ -10,6 +10,13 @@ func (err constError) String() string {
 	return string(err)
 }
 
+// Generic errors
+const (
+	NotImplemented            = constError("not implemented")
+	OutOfMemory               = constError("out of memory")
+	CannotSetMemoryAttributes = constError("cannot set memory attributes")
+)
+
 // IPC Errors
 const (
 	TooManyHandles                    = constError("too many handles")
@@ -19,6 +26,7 @@ const (
 	InvalidBufferSize                 = constError("invalid buffer size")
 	InvalidBufferFlags                = constError("invalid buffer flags")
 	InvalidRequestType                = constError("invalid request type")
+	InvalidDomain                     = constError("invalid domain")
 	CantSendDomainObjectToSession     = constError("cant send domain object to session")
 	TooManyObjects                    = constError("too many objects")
 	InvalidRawDataSize                = constError("invalid raw data size")
@@ -58,4 +66,27 @@ const (
 const (
 	VINotInitialized = constError("vi not initialized")
 	ParcelDataTooBig = constError("parcel data too big")
+)
+
+// AM Errors
+const (
+	AMNotInitialized = constError("am not initialized")
+)
+
+// Display Errors
+const (
+	DisplayNotInitialized              = constError("display not initialized")
+	ParcelDataUnderrun                 = constError("parcel data underrun")
+	DisplayInvalidFence                = constError("invalid display fence")
+	DisplayFenceTooManyFds             = constError("too many display fence file descriptors")
+	DisplayGraphicBufferLengthMismatch = constError("display graphic buffer length mismatch")
+	SurfaceInvalidState                = constError("surface invalid state")
+	SurfaceBufferDequeueFailed         = constError("surface buffer dequeue failed")
+	SurfaceBufferQueueFailed           = constError("surface buffer queue failed")
+)
+
+// SM Errors
+const (
+	SmNotInitialized     = constError("sm not initialized")
+	SmServiceNameTooLong = constError("sm service name too long")
 )

@@ -6,6 +6,8 @@ import (
 	"unsafe"
 )
 
+const gpuDebug = true
+
 var (
 	nvasFd             int32
 	nvmapFd            int32
@@ -13,19 +15,19 @@ var (
 	gpuInitializations = 0
 )
 
-type gpuFence struct {
-	syncptId    uint32
-	syncptValue uint32
+type Fence struct {
+	SyncptId    uint32
+	SyncptValue uint32
 }
 
-func (g *gpuFence) Wait(timeout uint32) error {
+func (g *Fence) Wait(timeout uint32) error {
 	if gpuInitializations <= 0 {
 		return nxerrors.GPUNotInitialized
 	}
 
 	wait := nvhostIocCtrlSyncPtWaitArgs{
-		syncptId:  g.syncptId,
-		threshold: g.syncptValue,
+		syncptId:  g.SyncptId,
+		threshold: g.SyncptValue,
 		timeout:   timeout,
 	}
 
@@ -45,11 +47,15 @@ func (g *gpuFence) Wait(timeout uint32) error {
 }
 
 func Init() (err error) {
+	if gpuDebug {
+		println("GPU::Init()")
+	}
 	gpuInitializations++
 	if gpuInitializations > 1 {
 		return nil
 	}
 
+	nvInit := false
 	nvmapInit := false
 	nvasInit := false
 
@@ -61,30 +67,53 @@ func Init() (err error) {
 			if nvasInit {
 				_ = nv.Close(nvasFd)
 			}
-
-			nv.Finalize()
+			if nvInit {
+				nv.Finalize()
+			}
 			gpuInitializations--
 		}
 	}()
 
+	if gpuDebug {
+		println("GPU::Init() - Init NV")
+	}
+
+	err = nv.Init()
+	if err != nil {
+		return err
+	}
+	nvInit = true
+
+	if gpuDebug {
+		println("GPU::Init() - open nvhost-as-gpu")
+	}
 	nvasFd, err = nv.Open("/dev/nvhost-as-gpu")
 	if err != nil {
 		return err
 	}
 	nvasInit = true
 
+	if gpuDebug {
+		println("GPU::Init() - open nvmap")
+	}
 	nvmapFd, err = nv.Open("/dev/nvmap")
 	if err != nil {
 		return err
 	}
 	nvmapInit = true
 
+	if gpuDebug {
+		println("GPU::Init() - open nvhost-ctrl")
+	}
 	nvhostCtrlFd, err = nv.Open("/dev/nvhost-ctrl")
 
 	return err
 }
 
 func forceFinalize() {
+	if gpuDebug {
+		println("GPU::ForceFinalize()")
+	}
 	_ = nv.Close(nvhostCtrlFd)
 	_ = nv.Close(nvmapFd)
 	_ = nv.Close(nvasFd)
@@ -93,6 +122,9 @@ func forceFinalize() {
 }
 
 func Finalize() {
+	if gpuDebug {
+		println("GPU::Finalize()")
+	}
 	gpuInitializations--
 	if gpuInitializations <= 0 {
 		forceFinalize()

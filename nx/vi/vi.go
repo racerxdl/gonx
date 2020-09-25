@@ -1,11 +1,16 @@
 package vi
 
 import (
+	"fmt"
 	"github.com/racerxdl/gonx/nx/internal"
 	"github.com/racerxdl/gonx/nx/ipc"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/sm"
 	"unsafe"
+)
+
+const (
+	viDebug = true
 )
 
 var viDomain *ipc.Domain
@@ -18,6 +23,9 @@ var ihosbdObject ipc.Object // nn::visrv::sf::IHOSBinderDriver
 var viInitializations = 0
 
 func GetObject(iface ipc.Object, command int) (ipc.Object, error) {
+	if viDebug {
+		fmt.Printf("VI::GetObject(--, %d)\n", command)
+	}
 	if viInitializations <= 0 {
 		return ipc.Object{}, nxerrors.VINotInitialized
 	}
@@ -35,6 +43,9 @@ func GetObject(iface ipc.Object, command int) (ipc.Object, error) {
 }
 
 func Init() (err error) {
+	if viDebug {
+		println("VI::Init()")
+	}
 	viInitializations++
 	if viInitializations > 1 {
 		return nil
@@ -73,6 +84,9 @@ func Init() (err error) {
 		}
 	}()
 
+	if viDebug {
+		println("VI::Init() - SM Initialize")
+	}
 	// SM Initialize
 	err = sm.Init()
 	if err != nil {
@@ -81,6 +95,9 @@ func Init() (err error) {
 
 	smInit = true
 
+	if viDebug {
+		println("VI::Init() - VI:M Initialize")
+	}
 	// vi:m initialize
 	err = sm.GetService(&imrsObject, "vi:m")
 	if err != nil {
@@ -89,6 +106,9 @@ func Init() (err error) {
 
 	imrsInit = true
 
+	if viDebug {
+		println("VI::Init() - VI:M Convert to Domain")
+	}
 	// Domain Initialize
 	viDomain, err = ipc.ConvertToDomain(&imrsObject)
 	if err != nil {
@@ -96,6 +116,9 @@ func Init() (err error) {
 	}
 	domainInit = true
 
+	if viDebug {
+		println("VI::Init() - IADS Init")
+	}
 	// iads initialize
 	rq := ipc.MakeDefaultRequest(2)
 	rq.SetRawDataFromUint32Slice([]uint32{1})
@@ -111,18 +134,27 @@ func Init() (err error) {
 	iadsObject = rs.Objects[0]
 	iadsInit = true
 
+	if viDebug {
+		println("VI::Init() - IHOSBD Init")
+	}
 	ihosbdObject, err = GetObject(iadsObject, 100)
 	if err != nil {
 		return err
 	}
 	ihosbdInit = true
 
+	if viDebug {
+		println("VI::Init() - ISDS Init")
+	}
 	isdsObject, err = GetObject(iadsObject, 101)
 	if err != nil {
 		return err
 	}
 	isdsInit = true
 
+	if viDebug {
+		println("VI::Init() - IMDS Init")
+	}
 	imdsObject, err = GetObject(iadsObject, 102)
 	if err != nil {
 		return err
@@ -132,6 +164,9 @@ func Init() (err error) {
 }
 
 func TransactParcel(handle int32, transaction, flags uint32, rqParcel []byte, rsParcel []byte) error {
+	if viDebug {
+		fmt.Printf("VI::TransactParcel(%d, %d, %d, [%d]byte, [%d]byte)\n", handle, transaction, flags, len(rqParcel), len(rsParcel))
+	}
 	if viInitializations <= 0 {
 		return nxerrors.VINotInitialized
 	}
@@ -169,6 +204,9 @@ func TransactParcel(handle int32, transaction, flags uint32, rqParcel []byte, rs
 }
 
 func AdjustRefCount(handle, addVal, Type int32) error {
+	if viDebug {
+		fmt.Printf("VI::AdjustRefCount(%d, %d, %d)\n", handle, addVal, Type)
+	}
 	if viInitializations <= 0 {
 		return nxerrors.VINotInitialized
 	}
@@ -182,6 +220,9 @@ func AdjustRefCount(handle, addVal, Type int32) error {
 }
 
 func forceFinalize() {
+	if viDebug {
+		println("VI::ForceFinalize()")
+	}
 	_ = ipc.Close(isdsObject)
 	_ = ipc.Close(ihosbdObject)
 	_ = ipc.Close(iadsObject)
@@ -191,6 +232,9 @@ func forceFinalize() {
 }
 
 func Finalize() {
+	if viDebug {
+		println("VI::Finalize()")
+	}
 	viInitializations--
 	if viInitializations < 0 {
 		forceFinalize()

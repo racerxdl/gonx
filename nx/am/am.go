@@ -16,7 +16,7 @@ var amDomain *ipc.Domain
 
 func GetObject(iface ipc.Object, command int) (ipc.Object, error) {
 	if amInitializations <= 0 {
-		return ipc.Object{}, nxerrors.VINotInitialized
+		return ipc.Object{}, nxerrors.AMNotInitialized
 	}
 
 	rq := ipc.MakeDefaultRequest(uint32(command))
