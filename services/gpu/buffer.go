@@ -6,6 +6,12 @@ import (
 	"unsafe"
 )
 
+const (
+	NV_LAYOUT_PITCH  = 1
+	NV_LAYOUT_TILED  = 2
+	NV_LAYOUT_LINEAR = 3
+)
+
 type Buffer struct {
 	NvMapHandle uint32
 	Size        uintptr

@@ -69,7 +69,9 @@ func (s *Surface) DequeueBuffer() ([]byte, error) {
 		return nil, nxerrors.SurfaceInvalidState
 	}
 
-	status, slot, fence, _, err := IGBPDequeueBuffer(s.IGBP, 1280, 720, 1, 0xb00, false)
+	bf := s.GraphicBuffers[s.CurrentSlot]
+
+	status, slot, fence, _, err := IGBPDequeueBuffer(s.IGBP, bf.Width, bf.Height, bf.Format, bf.Usage, false)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +186,7 @@ func SurfaceCreate(layerId uint64, igbp vi.IGBP) (surface *Surface, status int, 
 			Height:    qbo.Height,
 			Stride:    qbo.Width,
 			Format:    RGBA_8888,
-			Usage:     0xb00,
+			Usage:     GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE,
 			GPUBuffer: surface.GpuBuffer,
 		}
 		surface.GraphicBuffers[i].PixelBufferOffset = uint32(0x3c0000 * i)

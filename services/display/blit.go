@@ -1,5 +1,9 @@
 package display
 
+import (
+	"unsafe"
+)
+
 func pdep(mask, value uint32) uint32 {
 	out := uint32(0)
 	for shift := uint32(0); shift < 32; shift++ {
@@ -14,33 +18,31 @@ func pdep(mask, value uint32) uint32 {
 	return out
 }
 
+//go:inline
 func swizzleX(v uint32) uint32 {
 	return pdep(^uint32(0x7B4), v)
 }
 
+//go:inline
 func swizzleY(v uint32) uint32 {
 	return pdep(0x7B4, v)
 }
 
-const tileHeight = 128
-const paddedWidth = tileHeight * 10
-
+//go:inline
 func setUint32(buffer []byte, idx uint32, v uint32) {
-	idx *= 4          // Uint32 size
-	_ = buffer[idx+3] // early bounds check to guarantee safety of writes below
-	buffer[idx] = byte(v)
-	buffer[idx+1] = byte(v >> 8)
-	buffer[idx+2] = byte(v >> 16)
-	buffer[idx+3] = byte(v >> 24)
+	*(*uint32)(unsafe.Pointer(&buffer[idx*4])) = v
 }
 
+//go:inline
 func getUint32(buffer []byte, idx uint32) uint32 {
-	idx *= 4          // Uint32 size
-	_ = buffer[idx+3] // bounds check hint to compiler; see golang.org/issue/14808
-	return uint32(buffer[idx+0]) | uint32(buffer[idx+1])<<8 | uint32(buffer[idx+2])<<16 | uint32(buffer[idx+3])<<24
+	return *(*uint32)(unsafe.Pointer(&buffer[idx*4]))
 }
 
+//go:nobounds
 func GFXSlowSwizzlingBlit(buffer []byte, image []byte, w, h, tx, ty int) {
+	const tileHeight = 128
+	const paddedWidth = tileHeight * 10
+
 	x0 := uint32(tx)
 	y0 := uint32(ty)
 	x1 := x0 + uint32(w)

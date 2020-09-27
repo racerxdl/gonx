@@ -70,6 +70,7 @@ func (f *Frame) Clear(c color.RGBA) {
 func (f *Frame) Display() error {
 	s := f.bounds.Size()
 	GFXSlowSwizzlingBlit(f.surfaceBuff, f.buff, s.X, s.Y, 0, 0)
+	//GFXSlowSwizzlingBlit2(f.surfaceBuff, f.buff, s.X, s.Y)
 	err := f.surface.QueueBuffer()
 	if err != nil {
 		return err
