@@ -1,11 +1,13 @@
 package display
 
 import (
+	"github.com/racerxdl/gonx/font"
 	"github.com/racerxdl/gonx/nx/nxtypes"
 	"github.com/racerxdl/gonx/svc"
 	"image"
 	"image/color"
 	"time"
+	"unsafe"
 )
 
 const minScreenFps = 30 // 30 fps
@@ -58,19 +60,37 @@ func (f *Frame) SetPixel(x, y int, c color.RGBA) {
 	f.buff[off+3] = c.A
 }
 
+//go:nobounds
 func (f *Frame) Clear(c color.RGBA) {
-	for i := 0; i < len(f.buff)/4; i++ {
-		f.buff[i*4+0] = c.R
-		f.buff[i*4+1] = c.G
-		f.buff[i*4+2] = c.B
-		f.buff[i*4+3] = c.A
+	u32color := (uint32(c.A) << 24) + (uint32(c.B) << 16) + (uint32(c.G) << 8) + uint32(c.R)
+	u32len := len(f.buff) / 4
+
+	for i := 0; i < u32len; i++ {
+		*(*uint32)(unsafe.Pointer(&f.buff[i*4])) = u32color
+	}
+}
+
+func (f *Frame) DrawStringAt(x, y int, data string, c color.RGBA, font *font.Data) {
+	cx := x
+	cy := y
+	for _, v := range data {
+		if v == '\n' {
+			cy += font.CharHeight
+			cx = x
+			continue
+		}
+		if v == '\r' {
+			continue
+		}
+		g := font.GetGlyph(uint32(v))
+		g.DrawAt(cx, cy, c, f.buff, f.bounds.Size().X)
+		cx += font.CharWidth
 	}
 }
 
 func (f *Frame) Display() error {
 	s := f.bounds.Size()
 	GFXSlowSwizzlingBlit(f.surfaceBuff, f.buff, s.X, s.Y, 0, 0)
-	//GFXSlowSwizzlingBlit2(f.surfaceBuff, f.buff, s.X, s.Y)
 	err := f.surface.QueueBuffer()
 	if err != nil {
 		return err
