@@ -7,6 +7,7 @@ import (
 	"github.com/racerxdl/gonx/services/sm"
 )
 
+var debug = false
 var amInitializations = 0
 var proxyServiceObject ipc.Object
 var proxyObject ipc.Object
@@ -32,6 +33,9 @@ func GetObject(iface ipc.Object, command int) (ipc.Object, error) {
 }
 
 func Init() (err error) {
+	if debug {
+		println("am::Init()")
+	}
 	amInitializations++
 	if amInitializations > 1 {
 		return nil
@@ -46,16 +50,17 @@ func Init() (err error) {
 		if err != nil {
 			amInitializations--
 			if iscInit {
-				_ = ipc.Close(iscObject)
+				_ = ipc.Close(&iscObject)
 			}
 			if proxyInit {
-				_ = ipc.Close(proxyObject)
+				_ = ipc.Close(&proxyObject)
 			}
 			if proxyServiceInit {
-				_ = ipc.Close(proxyServiceObject)
+				_ = ipc.Close(&proxyServiceObject)
 			}
 			if domainInit {
 				_ = ipc.CloseSession(amDomain.Session)
+				amDomain = nil
 			}
 		}
 		sm.Finalize()
@@ -66,7 +71,8 @@ func Init() (err error) {
 		return err
 	}
 
-	err = sm.GetService(&proxyServiceObject, "appletAE")
+	//err = sm.GetService(&proxyServiceObject, "appletAE")
+	err = sm.GetService(&proxyServiceObject, "appletOE")
 	if err != nil {
 		return err
 	}
@@ -79,7 +85,8 @@ func Init() (err error) {
 	domainInit = true
 
 	// Open Application Proxy
-	rq := ipc.MakeDefaultRequest(200)
+	//rq := ipc.MakeDefaultRequest(200) // appletAE
+	rq := ipc.MakeDefaultRequest(0) // appletOE
 	rq.SetRawDataFromUint64(0)
 	rq.SendPID = true
 	rq.CopyHandles = []nxtypes.Handle{0xFFFF8001}
@@ -106,15 +113,26 @@ func Init() (err error) {
 }
 
 func forceFinalize() {
-	_ = ipc.Close(iwcObject)
-	_ = ipc.Close(iscObject)
-	_ = ipc.Close(proxyObject)
-	_ = ipc.Close(proxyServiceObject)
-	_ = ipc.CloseSession(amDomain.Session)
+	if debug {
+		println("am::ForceFinalize()")
+	}
+
+	_ = ipc.Close(&iwcObject)
+	_ = ipc.Close(&iscObject)
+	_ = ipc.Close(&proxyObject)
+	_ = ipc.Close(&proxyServiceObject)
+
+	if amDomain != nil {
+		_ = ipc.CloseSession(amDomain.Session)
+		amDomain = nil
+	}
 	amInitializations = 0
 }
 
 func Finalize() {
+	if debug {
+		println("am::Finalize()")
+	}
 	amInitializations--
 	if amInitializations <= 0 {
 		forceFinalize()

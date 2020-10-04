@@ -675,6 +675,9 @@ func Send(object Object, rq *Request, rs *ResponseFmt) error {
 
 func CloseSession(session nxtypes.SessionHandle) error {
 	var err error
+	if session == 0 {
+		return nil
+	}
 
 	rq := MakeDefaultRequest(0)
 	rq.Type = TypeIPCClose
@@ -721,10 +724,14 @@ func CloseSession(session nxtypes.SessionHandle) error {
 	return err
 }
 
-func Close(object Object) error {
+func Close(object *Object) error {
 	if object.IsBorrowed {
 		return nil // we're not allowed to close borrowed objects,
 		// and we would also like to handle this transparently
+	}
+
+	if object.Content == 0 {
+		return nil // Already closed
 	}
 
 	if object.ObjectID < 0 {
@@ -737,7 +744,7 @@ func Close(object Object) error {
 	svc.ClearIPCBuffer()
 	ipcBuff := svc.GetIPCBuffer()
 
-	err := PackIPCRequest(&rq, object, ipcBuff)
+	err := PackIPCRequest(&rq, *object, ipcBuff)
 	if err != nil {
 		return err
 	}
@@ -756,6 +763,10 @@ func Close(object Object) error {
 		return nxerrors.InvalidDomain
 	}
 
+	if d.Session == 0 {
+		return nxerrors.InvalidDomain
+	}
+
 	r := svc.SendSyncRequest(uint64(d.Session))
 	if r > 0 {
 		if debug {
@@ -768,10 +779,15 @@ func Close(object Object) error {
 		}
 	}
 
+	object.Recycle()
+
 	return nil
 }
 
 func ConvertToDomain(object *Object) (*Domain, error) {
+	if object == nil {
+		return nil, nxerrors.InvalidHandle
+	}
 	if object.IsBorrowed {
 		return nil, nxerrors.RefusalToConvertBorrowedObject
 	}

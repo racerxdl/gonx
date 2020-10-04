@@ -28,6 +28,7 @@ const (
 	InvalidBufferFlags                = constError("invalid buffer flags")
 	InvalidRequestType                = constError("invalid request type")
 	InvalidDomain                     = constError("invalid domain")
+	InvalidHandle                     = constError("invalid handle")
 	CantSendDomainObjectToSession     = constError("cant send domain object to session")
 	TooManyObjects                    = constError("too many objects")
 	InvalidRawDataSize                = constError("invalid raw data size")

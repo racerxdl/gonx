@@ -63,19 +63,20 @@ func Init() (err error) {
 			viInitializations--
 
 			if isdsInit {
-				_ = ipc.Close(isdsObject)
+				_ = ipc.Close(&isdsObject)
 			}
 			if ihosbdInit {
-				_ = ipc.Close(ihosbdObject)
+				_ = ipc.Close(&ihosbdObject)
 			}
 			if iadsInit {
-				_ = ipc.Close(iadsObject)
+				_ = ipc.Close(&iadsObject)
 			}
 			if imrsInit {
-				_ = ipc.Close(imrsObject)
+				_ = ipc.Close(&imrsObject)
 			}
 			if domainInit {
 				_ = ipc.CloseSession(viDomain.Session)
+				viDomain = nil
 			}
 		}
 
@@ -223,11 +224,14 @@ func forceFinalize() {
 	if viDebug {
 		println("VI::ForceFinalize()")
 	}
-	_ = ipc.Close(isdsObject)
-	_ = ipc.Close(ihosbdObject)
-	_ = ipc.Close(iadsObject)
-	_ = ipc.Close(imrsObject)
-	_ = ipc.CloseSession(viDomain.Session)
+	_ = ipc.Close(&isdsObject)
+	_ = ipc.Close(&ihosbdObject)
+	_ = ipc.Close(&iadsObject)
+	_ = ipc.Close(&imrsObject)
+	if viDomain != nil {
+		_ = ipc.CloseSession(viDomain.Session)
+		viDomain = nil
+	}
 	viInitializations = 0
 }
 

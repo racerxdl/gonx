@@ -70,7 +70,7 @@ func Init() error {
 		if debugSm {
 			fmt.Printf("error initializing sm: %s", err)
 		}
-		_ = ipc.Close(smObject)
+		_ = ipc.Close(&smObject)
 		smInitializations--
 		return err
 	}
@@ -87,7 +87,7 @@ func Finalize() {
 }
 
 func smForceFinalize() {
-	_ = ipc.Close(smObject)
+	_ = ipc.Close(&smObject)
 	smInitializations = 0
 }
 

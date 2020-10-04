@@ -158,9 +158,9 @@ func SurfaceCreate(layerId uint64, igbp vi.IGBP) (surface *Surface, status int, 
 		}
 	}()
 
-	var qbo *QueueBufferOutput
+	//var qbo *QueueBufferOutput
 
-	status, qbo, err = IGBPConnect(igbp, 2, false)
+	status, _, err = IGBPConnect(igbp, 2, false)
 	if err != nil {
 		return nil, status, err
 	}
@@ -182,9 +182,9 @@ func SurfaceCreate(layerId uint64, igbp vi.IGBP) (surface *Surface, status int, 
 
 	for i := range surface.GraphicBuffers {
 		surface.GraphicBuffers[i] = GraphicBuffer{
-			Width:     qbo.Width,
-			Height:    qbo.Height,
-			Stride:    qbo.Width,
+			Width:     1280,
+			Height:    720,
+			Stride:    1280,
 			Format:    RGBA_8888,
 			Usage:     GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE,
 			GPUBuffer: surface.GpuBuffer,

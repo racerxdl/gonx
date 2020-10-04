@@ -154,15 +154,15 @@ func IGBPDequeueBuffer(igbp vi.IGBP, width, height uint32, pixelFormat PixelForm
 
 	p := &vi.Parcel{}
 	p.WriteInterfaceToken(interfaceToken)
-	p.WriteU32(uint32(pixelFormat))
+	p.WriteU32(0) // async
 	p.WriteU32(width)
 	p.WriteU32(height)
-	p.WriteU32(0) // getFrameTimestamps
+	p.WriteU32(uint32(pixelFormat))
 	p.WriteU32(usage)
 
 	response, err = vi.BinderTransactParcel(igbp.IgbpBinder, DEQUEUE_BUFFER, 0, p)
 	if err != nil {
-		return status, slot, fence, outTimestamps, nxerrors.NotImplemented
+		return status, slot, fence, outTimestamps, err
 	}
 
 	slot = response.ReadU32()
@@ -171,7 +171,7 @@ func IGBPDequeueBuffer(igbp vi.IGBP, width, height uint32, pixelFormat PixelForm
 	if hasFence {
 		fence, err = UnflattenFence(response)
 		if err != nil {
-			return status, slot, fence, outTimestamps, nxerrors.NotImplemented
+			return status, slot, fence, outTimestamps, err
 		}
 	}
 

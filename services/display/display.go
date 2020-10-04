@@ -116,6 +116,7 @@ func OpenLayer() (surface *Surface, err error) {
 	managedLayerInit := false
 	igbpInit := false
 	surfaceInit := false
+	layerId = 0
 
 	defer func() {
 		if err != nil {
@@ -137,37 +138,25 @@ func OpenLayer() (surface *Surface, err error) {
 		}
 	}()
 
-	if !displayInitializedAM {
-		// Homebrew override
-		// TODO: vi_create_managed_layer
-		if debugDisplay {
-			println("Display::OpenLayer() - AM NOT INITIALIZED")
-		}
-		return surface, nxerrors.NotImplemented
-	}
-
-	if debugDisplay {
-		println("Display::OpenLayer() - IwcAcquireForegroundRights")
-	}
-	err = am.IwcAcquireForegroundRights()
-	if err != nil {
-		return surface, err
-	}
-
-	if debugDisplay {
-		println("Display::OpenLayer() - IwcGetAppletResourceUserId")
-	}
 	aruid, err = am.IwcGetAppletResourceUserId()
 	if err != nil {
 		return surface, err
 	}
 
 	if debugDisplay {
-		println("Display::OpenLayer() - IscCreateManagedDisplayLayer")
+		println("Display::OpenLayer() - CreateManagedLayer")
 	}
-	layerId, err = am.IscCreateManagedDisplayLayer()
-	if err != nil {
-		return surface, err
+	if aruid > 0 {
+		// Applet
+		layerId, err = am.IscCreateManagedDisplayLayer()
+		if err != nil {
+			return surface, err
+		}
+	} else {
+		layerId, err = vi.CreateManagedLayer(display, 0, aruid)
+		if err != nil {
+			return surface, err
+		}
 	}
 	managedLayerInit = true
 
@@ -192,14 +181,10 @@ func OpenLayer() (surface *Surface, err error) {
 	if debugDisplay {
 		println("Display::OpenLayer() - IadsSetLayerScalingMode")
 	}
-	err = vi.IadsSetLayerScalingMode(2, layerId)
+	err = vi.IadsSetLayerScalingMode(vi.ScalingMode_FitToLayer, layerId)
 	if err != nil {
 		return surface, err
 	}
-
-	//if !displayInitializedAM {
-	//	// Homebrew, TODO
-	//}
 
 	return surface, nil
 }

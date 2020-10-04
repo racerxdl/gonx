@@ -64,6 +64,10 @@ func CloseDisplay(d *Display) error {
 		return nxerrors.VINotInitialized
 	}
 
+	if d == nil {
+		return nil
+	}
+
 	rq := ipc.MakeDefaultRequest(requestCloseDisplay)
 	rq.SetRawDataFromUint64(d.ID)
 
@@ -94,6 +98,39 @@ func GetDisplayVsyncEvent(d *Display) error {
 	d.VSync = nxtypes.ReventHandle(rs.CopyHandles[0])
 
 	return nil
+}
+
+func CreateManagedLayer(display *Display, flags uint32, aruid nxtypes.ARUID) (uint64, error) {
+	if viDebug {
+		fmt.Printf("VI::CreateManagedLayer(%s, %d, %d)\n", display.ID, flags, aruid)
+	}
+	if viInitializations <= 0 {
+		return 0, nxerrors.VINotInitialized
+	}
+
+	rqArgs := struct {
+		layerFlags uint32
+		displayId  uint64
+		aruid      nxtypes.ARUID
+	}{
+		displayId:  display.ID,
+		layerFlags: flags,
+		aruid:      aruid,
+	}
+
+	rq := ipc.MakeDefaultRequest(requestCreateManagedLayer)
+	rq.RawData = make([]byte, unsafe.Sizeof(rqArgs))
+	internal.Memcpy(unsafe.Pointer(&rq.RawData[0]), unsafe.Pointer(&rqArgs), unsafe.Sizeof(rqArgs))
+
+	rs := ipc.ResponseFmt{}
+	rs.RawData = make([]byte, 8) // one uint64
+
+	err := ipc.Send(imdsObject, &rq, &rs)
+	if err != nil {
+		return 0, err
+	}
+
+	return binary.LittleEndian.Uint64(rs.RawData), nil
 }
 
 func OpenLayer(displayName string, layerId uint64, aruid nxtypes.ARUID) (*IGBP, error) {
@@ -188,7 +225,7 @@ func DestroyManagedLayer(layerId uint64) error {
 	return ipc.Send(imdsObject, &rq, &rs)
 }
 
-func IadsSetLayerScalingMode(scalingMode uint32, layerId uint64) error {
+func IadsSetLayerScalingMode(scalingMode ScalingMode, layerId uint64) error {
 	if viDebug {
 		fmt.Printf("VI::IadsSetLayerScalingMode(%d, %d)\n", scalingMode, layerId)
 	}
@@ -200,7 +237,7 @@ func IadsSetLayerScalingMode(scalingMode uint32, layerId uint64) error {
 		scalingMode uint32
 		layerId     uint64
 	}{
-		scalingMode: scalingMode,
+		scalingMode: uint32(scalingMode),
 		layerId:     layerId,
 	}
 

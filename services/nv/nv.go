@@ -45,7 +45,7 @@ func Init() (err error) {
 			}
 
 			if nvsInitialize {
-				_ = ipc.Close(nvObject)
+				_ = ipc.Close(&nvObject)
 			}
 		}
 
@@ -61,7 +61,8 @@ func Init() (err error) {
 	}
 	smInitialize = true
 
-	err = sm.GetService(&nvObject, "nvdrv:a")
+	//err = sm.GetService(&nvObject, "nvdrv:a")
+	err = sm.GetService(&nvObject, "nvdrv")
 	if err != nil {
 		return fmt.Errorf("error getting \"nvdrv:a\": %s", err)
 	}
@@ -107,7 +108,8 @@ func nvForceFinalize() {
 	if transferMem != 0 {
 		svc.CloseHandle(transferMem)
 	}
-	_ = ipc.Close(nvObject)
+	_ = ipc.Close(&nvObject)
+	nvObject = ipc.Object{}
 	nvInitializations = 0
 }
 
