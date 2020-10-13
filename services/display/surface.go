@@ -5,6 +5,7 @@ import (
 	"github.com/racerxdl/gonx/nx/memory"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
+	"github.com/racerxdl/gonx/services/am"
 	"github.com/racerxdl/gonx/services/gpu"
 	"github.com/racerxdl/gonx/services/vi"
 	"github.com/racerxdl/gonx/svc"
@@ -40,14 +41,23 @@ func (s *Surface) Destroy() {
 		return
 	}
 
+	_, _ = s.DequeueBuffer()
+
 	_, _ = IGBPDisconnect(s.IGBP, 2, DisconnectAllLocal)
 	_ = vi.AdjustRefCount(s.IGBP.IgbpBinder.Handle, -1, 1)
 	_ = vi.CloseLayer(s.LayerId)
-	_ = vi.DestroyManagedLayer(s.LayerId)
+
+	aruid, err := am.IwcGetAppletResourceUserId()
+	if err != nil {
+		return
+	}
+	if aruid == 0 {
+		_ = vi.DestroyManagedLayer(s.LayerId)
+	}
 	s.State = SURFACE_STATE_INVALID
 
-	_, _, _ = s.GpuBuffer.Destroy()
 	svc.SetMemoryAttribute(uintptr(unsafe.Pointer(&s.GpuBufferMemory[0])), uintptr(0x3c0000*len(s.GraphicBuffers)), 0, 0)
+	_, _, _ = s.GpuBuffer.Destroy()
 	s.GpuBufferMemory = nil
 }
 
