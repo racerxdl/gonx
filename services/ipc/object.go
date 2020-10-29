@@ -2,7 +2,7 @@ package ipc
 
 import (
 	"github.com/racerxdl/gonx/nx/nxtypes"
-	"runtime"
+	"github.com/racerxdl/gonx/svc"
 	"unsafe"
 )
 
@@ -62,7 +62,7 @@ func (o Object) SetDomain(domain *Domain) {
 }
 
 func (o Object) GetDomain() *Domain {
-	if o.ObjectID >= 0 && o.Content != 0 && uintptr(o.Content) > runtime.GetHeapBase() {
+	if o.ObjectID >= 0 && o.Content != 0 && uintptr(o.Content) > svc.GetHeapBase() {
 		return (*Domain)(unsafe.Pointer(uintptr(o.Content)))
 	}
 
