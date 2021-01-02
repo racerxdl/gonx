@@ -50,9 +50,13 @@ func (f *Frame) At(x, y int) color.Color {
 	}
 }
 
-func (f *Frame) SetPixel(x, y int, c color.RGBA) {
+func (f *Frame) Size() (x, y int16) {
+	return int16(f.Bounds().Size().X), int16(f.Bounds().Size().Y)
+}
+
+func (f *Frame) SetPixel(x, y int16, c color.RGBA) {
 	w := f.bounds.Size().X
-	off := (y*w + x) * 4
+	off := (int(y)*w + int(x)) * 4
 	_ = f.buff[off+3]
 	f.buff[off+0] = c.R
 	f.buff[off+1] = c.G
