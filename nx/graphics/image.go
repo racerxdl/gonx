@@ -73,7 +73,7 @@ func (img *RGBAFBImage) SetRGBA32(x, y int, c uint32) {
 	*(*uint32)(unsafe.Pointer(uintptr(img.imgPtr) + i)) = c
 }
 
-func (img RGBAFBImage) End() {
+func (img *RGBAFBImage) End() {
 	internal.FramebufferEnd(img.parentPtr)
 	img.m = nil
 	img.parentPtr = nil

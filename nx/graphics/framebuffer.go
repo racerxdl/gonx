@@ -69,3 +69,11 @@ func (fb *Framebuffer) StartFrameAsRGBA() (*RGBAFBImage, error) {
 
 	return fb.frame, nil
 }
+
+// GetDisplayer returns a tinygo-draw compatible displayer
+func (fb *Framebuffer) GetDisplayer() *Displayer {
+	return &Displayer{
+		fb: fb,
+		m:  image.NewRGBA(image.Rect(0, 0, int(fb.width), int(fb.height))),
+	}
+}
