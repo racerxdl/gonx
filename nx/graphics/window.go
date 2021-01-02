@@ -3,7 +3,7 @@ package graphics
 import (
 	"fmt"
 	"github.com/racerxdl/gonx/internal"
-	"github.com/racerxdl/gonx/nx/system"
+	"github.com/racerxdl/gonx/nx/nxtypes"
 	"unsafe"
 )
 
@@ -25,7 +25,7 @@ func (w *Window) MakeFramebuffer(width, height, numFbs uint32, format PixelForma
 	fb.buildBuffer()
 
 	r := internal.FramebufferCreate(fb.ptr(), w.ptr, width, height, uint32(format), numFbs)
-	if r != system.ResultOK {
+	if r != nxtypes.ResultOK {
 		return nil, fmt.Errorf("error creating framebuffer")
 	}
 
