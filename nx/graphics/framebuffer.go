@@ -2,7 +2,7 @@ package graphics
 
 import (
 	"fmt"
-	"github.com/racerxdl/gonx/nx/internal"
+	"github.com/racerxdl/gonx/internal"
 	"image"
 	"unsafe"
 )
@@ -68,4 +68,12 @@ func (fb *Framebuffer) StartFrameAsRGBA() (*RGBAFBImage, error) {
 	fb.frame.m.Stride = int(stride)
 
 	return fb.frame, nil
+}
+
+// GetDisplayer returns a tinygo-draw compatible displayer
+func (fb *Framebuffer) GetDisplayer() *Displayer {
+	return &Displayer{
+		fb: fb,
+		m:  image.NewRGBA(image.Rect(0, 0, int(fb.width), int(fb.height))),
+	}
 }
