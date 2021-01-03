@@ -15,7 +15,7 @@ func IscCreateManagedDisplayLayer() (uint64, error) {
 	rs := ipc.ResponseFmt{}
 	rs.RawData = make([]byte, 8) // one uint64
 
-	err := ipc.Send(iscObject, &rq, &rs)
+	err := ipc.Send(iSelfControllerObject, &rq, &rs)
 	if err != nil {
 		return 0, err
 	}
@@ -31,5 +31,5 @@ func IscApproveToDisplay() error {
 	rq := ipc.MakeDefaultRequest(51)
 	rs := ipc.ResponseFmt{}
 
-	return ipc.Send(iscObject, &rq, &rs)
+	return ipc.Send(iSelfControllerObject, &rq, &rs)
 }

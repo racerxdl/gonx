@@ -13,7 +13,6 @@ const debugDisplay = false
 
 var display *vi.Display
 var displayInitializations = 0
-var displayInitializedAM = false
 
 func Init() (err error) {
 	if debugDisplay {
@@ -68,10 +67,6 @@ func Init() (err error) {
 	if debugDisplay {
 		println("Display::Init() - AM Init")
 	}
-	err = am.Init()
-	if err == nil {
-		displayInitializedAM = true
-	}
 
 	return nil
 }
@@ -79,10 +74,6 @@ func Init() (err error) {
 func forceFinalize() {
 	if debugDisplay {
 		println("Display::ForceFinalize()")
-	}
-	if displayInitializedAM {
-		am.Finalize()
-		displayInitializedAM = false
 	}
 
 	_ = vi.CloseDisplay(display)

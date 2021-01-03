@@ -13,7 +13,7 @@ var smObject ipc.Object
 
 const (
 	smServiceName = "sm:\x00"
-	debugSm       = true
+	debugSm       = false
 )
 
 // str2u64 converts a string to uint64 representation

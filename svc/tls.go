@@ -2,8 +2,8 @@ package svc
 
 // Default Handles
 const (
-	currentProcessHandle = 0xFFFF8001 /// Pseudo handle for the current process.
-	currentThreadHandle  = 0xFFFF8000 /// Pseudo handle for the current thread.
+	CurrentProcessHandle = 0xFFFF8001 /// Pseudo handle for the current process.
+	CurrentThreadHandle  = 0xFFFF8000 /// Pseudo handle for the current thread.
 )
 
 // TLS is the Nintendo Switch Thread Local Storage

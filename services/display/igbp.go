@@ -3,6 +3,7 @@ package display
 import (
 	"fmt"
 	"github.com/racerxdl/gonx/internal"
+	"github.com/racerxdl/gonx/nx/graphics"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/services/vi"
 	"unsafe"
@@ -129,10 +130,7 @@ func IGBPSetPreallocatedBuffer(igbp vi.IGBP, slot int, gb *GraphicBuffer) error 
 	p := &vi.Parcel{}
 	p.WriteInterfaceToken(interfaceToken)
 	p.WriteU32(uint32(slot))
-	p.WriteU32(1) // Unknown
-
-	p.WriteU32(0x16C)
-	p.WriteU32(0)
+	p.WriteU32(1) // Has Input
 
 	err := gb.Flatten(p)
 	if err != nil {
@@ -143,7 +141,7 @@ func IGBPSetPreallocatedBuffer(igbp vi.IGBP, slot int, gb *GraphicBuffer) error 
 	return err
 }
 
-func IGBPDequeueBuffer(igbp vi.IGBP, width, height uint32, pixelFormat PixelFormat, usage uint32, getFrameTimestamps bool) (status, slot uint32, fence Fence, outTimestamps *FrameEventHistoryDelta, err error) {
+func IGBPDequeueBuffer(igbp vi.IGBP, width, height uint32, pixelFormat graphics.PixelFormat, usage uint32, getFrameTimestamps bool) (status, slot uint32, fence Fence, outTimestamps *FrameEventHistoryDelta, err error) {
 	if debugDisplay {
 		fmt.Printf("IGBPDequeueBuffer(%d, %d, %d, %d, %d, %t)\n", igbp.IgbpBinder.Handle, width, height, pixelFormat, usage, getFrameTimestamps)
 	}

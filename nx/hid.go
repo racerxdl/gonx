@@ -81,9 +81,3 @@ func (k HidControllerKeys) IsKeyUp(key HidControllerKeys) bool {
     return !k.IsKeyDown(key)
 }
 
-//go:export hidScanInput
-func HidScanInput()
-
-//u64 hidKeysDown(HidControllerID id);
-//go:export hidKeysDown
-func HidKeysDown(id HidControllerId) HidControllerKeys

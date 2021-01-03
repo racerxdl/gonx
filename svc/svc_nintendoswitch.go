@@ -129,6 +129,11 @@ func WaitSynchronizationSingle(handle nxtypes.Handle, timeout time.Duration) err
 	return err
 }
 
+// Break calls to a SVC Break
+func Break(breakReason, v0, info uint64) uint64 {
+	return uint64(arm64.SVCall3(0x26, breakReason, v0, info))
+}
+
 // GetTLS returns a pointer to thread local storage
 func GetTLS() *TLS {
 	tlsPtr := arm64.AsmFull(`mrs {}, tpidrro_el0`, nil)

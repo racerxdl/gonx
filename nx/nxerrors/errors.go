@@ -72,7 +72,10 @@ const (
 
 // AM Errors
 const (
-	AMNotInitialized = constError("am not initialized")
+	AMNotInitialized  = constError("am not initialized")
+	UnknownAppletType = constError("unknown applet type")
+
+	AMBusy = 0x19280
 )
 
 // Display Errors

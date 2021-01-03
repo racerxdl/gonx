@@ -1,18 +1,21 @@
 package am
 
 import (
+	"github.com/racerxdl/gonx/nx/env"
 	"github.com/racerxdl/gonx/nx/nxerrors"
 	"github.com/racerxdl/gonx/nx/nxtypes"
 	"github.com/racerxdl/gonx/services/ipc"
 	"github.com/racerxdl/gonx/services/sm"
+	"github.com/racerxdl/gonx/svc"
+	"time"
 )
 
 var debug = false
 var amInitializations = 0
 var proxyServiceObject ipc.Object
 var proxyObject ipc.Object
-var iscObject ipc.Object
-var iwcObject ipc.Object
+var iSelfControllerObject ipc.Object
+var iWindowController ipc.Object
 var amDomain *ipc.Domain
 
 func GetObject(iface ipc.Object, command int) (ipc.Object, error) {
@@ -50,7 +53,7 @@ func Init() (err error) {
 		if err != nil {
 			amInitializations--
 			if iscInit {
-				_ = ipc.Close(&iscObject)
+				_ = ipc.Close(&iSelfControllerObject)
 			}
 			if proxyInit {
 				_ = ipc.Close(&proxyObject)
@@ -71,8 +74,18 @@ func Init() (err error) {
 		return err
 	}
 
-	//err = sm.GetService(&proxyServiceObject, "appletAE")
-	err = sm.GetService(&proxyServiceObject, "appletOE")
+	appletType := env.GetAppletType()
+
+	switch appletType {
+	case nxtypes.AppletTypeDefault:
+		appletType = nxtypes.AppletTypeApplication
+		fallthrough
+	case nxtypes.AppletTypeApplication:
+		err = sm.GetService(&proxyServiceObject, "appletOE")
+	default:
+		err = sm.GetService(&proxyServiceObject, "appletAE")
+	}
+
 	if err != nil {
 		return err
 	}
@@ -84,31 +97,58 @@ func Init() (err error) {
 	}
 	domainInit = true
 
+	cmdId := uint32(0)
+	switch appletType {
+	case nxtypes.AppletTypeApplication:
+		cmdId = 0
+	case nxtypes.AppletTypeSystemApplet:
+		cmdId = 100
+	case nxtypes.AppletTypeLibraryApplet:
+		cmdId = 200
+	case nxtypes.AppletTypeOverlayApplet:
+		cmdId = 300
+	case nxtypes.AppletTypeSystemApplication:
+		cmdId = 350
+	default:
+		return nxerrors.UnknownAppletType
+	}
+
 	// Open Application Proxy
-	//rq := ipc.MakeDefaultRequest(200) // appletAE
-	rq := ipc.MakeDefaultRequest(0) // appletOE
-	rq.SetRawDataFromUint64(0)
-	rq.SendPID = true
-	rq.CopyHandles = []nxtypes.Handle{0xFFFF8001}
-
+	rq := ipc.Request{}
 	rs := ipc.ResponseFmt{}
-	rs.Objects = make([]ipc.Object, 1)
+	resCode := uint64(nxerrors.AMBusy)
+	for resCode == nxerrors.AMBusy {
+		rq = ipc.MakeDefaultRequest(cmdId)
+		rq.SetRawDataFromUint64(0)
+		rq.SendPID = true
+		rq.CopyHandles = []nxtypes.Handle{svc.CurrentProcessHandle}
 
-	err = ipc.Send(proxyServiceObject, &rq, &rs)
-	if err != nil {
-		return err
+		rs = ipc.ResponseFmt{}
+		rs.Objects = make([]ipc.Object, 1)
+
+		err = ipc.Send(proxyServiceObject, &rq, &rs)
+		if err != nil {
+			ipcErr, ok := err.(nxerrors.IPCError)
+			if !ok || ipcErr.Result != nxerrors.AMBusy {
+				return err
+			}
+
+			time.Sleep(time.Second)
+		} else {
+			resCode = 0
+		}
 	}
 
 	proxyObject = rs.Objects[0]
 	proxyInit = true
 
-	iscObject, err = GetObject(proxyObject, 1)
+	iSelfControllerObject, err = GetObject(proxyObject, 1)
 	if err != nil {
 		return err
 	}
 	iscInit = true
 
-	iwcObject, err = GetObject(proxyObject, 2)
+	iWindowController, err = GetObject(proxyObject, 2)
 	return err
 }
 
@@ -117,8 +157,8 @@ func forceFinalize() {
 		println("am::ForceFinalize()")
 	}
 
-	_ = ipc.Close(&iwcObject)
-	_ = ipc.Close(&iscObject)
+	_ = ipc.Close(&iWindowController)
+	_ = ipc.Close(&iSelfControllerObject)
 	_ = ipc.Close(&proxyObject)
 	_ = ipc.Close(&proxyServiceObject)
 

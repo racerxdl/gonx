@@ -2,7 +2,7 @@ package svc
 
 import _ "unsafe" // for go:linkname
 
-//go:linkname GetContextPtr runtime.getContextPointer
+//go:linkname GetContextPtr runtime.getContextPtr
 func GetContextPtr() uintptr
 
 //go:linkname GetMainThreadHandle runtime.getMainThreadHandle

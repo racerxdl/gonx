@@ -16,7 +16,7 @@ func IwcGetAppletResourceUserId() (nxtypes.ARUID, error) {
 	rs := ipc.ResponseFmt{}
 	rs.RawData = make([]byte, 8) // one uint64
 
-	err := ipc.Send(iwcObject, &rq, &rs)
+	err := ipc.Send(iWindowController, &rq, &rs)
 	if err != nil {
 		return 0, err
 	}
@@ -32,5 +32,5 @@ func IwcAcquireForegroundRights() error {
 	rq := ipc.MakeDefaultRequest(10)
 	rs := ipc.ResponseFmt{}
 
-	return ipc.Send(iwcObject, &rq, &rs)
+	return ipc.Send(iWindowController, &rq, &rs)
 }

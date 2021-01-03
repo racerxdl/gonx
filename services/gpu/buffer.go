@@ -1,15 +1,12 @@
 package gpu
 
 import (
+	"fmt"
 	"github.com/racerxdl/gonx/nx/nxerrors"
+	"github.com/racerxdl/gonx/nx/nxtypes"
 	"github.com/racerxdl/gonx/services/nv"
+	"github.com/racerxdl/gonx/svc"
 	"unsafe"
-)
-
-const (
-	NV_LAYOUT_PITCH  = 1
-	NV_LAYOUT_TILED  = 2
-	NV_LAYOUT_LINEAR = 3
 )
 
 type Buffer struct {
@@ -145,21 +142,40 @@ func (b *Buffer) Destroy() (refCount uint32, flags uint32, err error) {
 	return uint32(nvmFree.refcount), nvmFree.flags, nil
 }
 
-func CreateBuffer(addr unsafe.Pointer, size uintptr, heapMask uint32, flags uint32, alignment uint32, kind uint8) (*Buffer, error) {
+// CreateBuffer creates a buffer in GPU
+// equivalent to nvMapCreate on libnx
+func CreateBuffer(addr unsafe.Pointer, size uintptr, heapMask, alignment uint32, kind nv.Kind) (*Buffer, error) {
 	if gpuInitializations <= 0 {
 		return nil, nxerrors.GPUNotInitialized
+	}
+
+	if alignment < 0x1000 {
+		alignment = 0x1000
 	}
 
 	uaddr := uintptr(addr)
 
 	if uint64(uaddr)&(uint64(alignment)-1) != 0 {
 		// GPU Driver crashes if this is not checked
+		fmt.Println("A")
+		return nil, nxerrors.GPUBufferUnaligned
+	}
+
+	if size == 0 || (size&0xFFF > 0) {
+		// GPU Driver crashes if this is not checked
+		fmt.Println("B")
+		return nil, nxerrors.GPUBufferUnaligned
+	}
+
+	if addr == nil || (uintptr(addr)&0xFFF > 0) {
+		// GPU Driver crashes if this is not checked
+		fmt.Println("C")
 		return nil, nxerrors.GPUBufferUnaligned
 	}
 
 	gpuB := &Buffer{
 		Size:      size,
-		Kind:      kind,
+		Kind:      uint8(kind),
 		Alignment: alignment,
 	}
 
@@ -180,25 +196,39 @@ func CreateBuffer(addr unsafe.Pointer, size uintptr, heapMask uint32, flags uint
 
 	gpuB.NvMapHandle = nvmCreate.handle
 
-	nvmAlloc := nvmapIocAllocArgs{
-		handle:   nvmCreate.handle,
-		heapmask: heapMask,
-		flags:    flags,
-		align:    alignment,
-		kind:     kind,
-		addr:     uint64(uintptr(addr)),
-	}
-
-	handle, err = nv.Ioctl(nvmapFd, NVMAP_IOC_ALLOC, unsafe.Pointer(&nvmAlloc), unsafe.Sizeof(nvmAlloc))
+	err = nvmapAlloc(nvmCreate.handle, heapMask, 0, alignment, uint32(kind), uintptr(addr))
 	if err != nil {
 		return nil, err
 	}
+
+	r := svc.SetMemoryAttribute(uintptr(addr), uintptr(size), 0x8, 0x8)
+	if r != nxtypes.ResultOK {
+		return nil, nxerrors.CannotSetMemoryAttributes
+	}
+
+	return gpuB, nil
+}
+
+func nvmapAlloc(nvmapHandle, heapMask, flags, align, kind uint32, addr uintptr) error {
+	nvmAlloc := nvmapIocAllocArgs{
+		handle:   nvmapHandle,
+		heapmask: heapMask,
+		flags:    flags,
+		align:    align,
+		kind:     uint8(kind),
+		addr:     uint64(addr),
+	}
+
+	handle, err := nv.Ioctl(nvmapFd, NVMAP_IOC_ALLOC, unsafe.Pointer(&nvmAlloc), unsafe.Sizeof(nvmAlloc))
+	if err != nil {
+		return err
+	}
 	if handle != 0 {
-		return nil, nxerrors.IPCError{
+		return nxerrors.IPCError{
 			Message: "error calling NVMAP_IOC_ALLOC",
 			Result:  uint64(handle),
 		}
 	}
 
-	return gpuB, nil
+	return nil
 }

@@ -2,8 +2,11 @@ package display
 
 import (
 	"github.com/racerxdl/gonx/internal"
+	"github.com/racerxdl/gonx/nx/graphics"
 	"github.com/racerxdl/gonx/nx/nxerrors"
+	"github.com/racerxdl/gonx/nx/nxtypes"
 	"github.com/racerxdl/gonx/services/gpu"
+	"github.com/racerxdl/gonx/services/nv"
 	"github.com/racerxdl/gonx/services/vi"
 	"unsafe"
 )
@@ -41,11 +44,15 @@ type GraphicBuffer struct {
 	Width             uint32
 	Height            uint32
 	Stride            uint32
-	Format            PixelFormat
+	Format            graphics.PixelFormat
+	Length            uint32
 	Usage             uint32
 	GPUBuffer         *gpu.Buffer
 	Index             int32
 	PixelBufferOffset uint32
+
+	NativeHandle *nxtypes.NativeHandle
+	GRBuff       *nv.GraphicBuffer
 }
 
 // QueueBufferInput Parameters passed to queueBuffer
@@ -85,54 +92,48 @@ func (qbi *QueueBufferInput) Flatten(p *vi.Parcel) {
 }
 
 func (gb *GraphicBuffer) Flatten(p *vi.Parcel) error {
-	gpuBufferId, err := gb.GPUBuffer.GetID()
-	if err != nil {
-		return err
-	}
+	buffer := make([]uint32, 0)
 
-	gpuBufferCopy, err := gpu.InitializeFromId(gpuBufferId)
-	if err != nil {
-		return err
-	}
+	buffer = append(buffer, 0x47424652) // GBFR (Graphic Buffer)
+	buffer = append(buffer, gb.Width)
+	buffer = append(buffer, gb.Height)
+	buffer = append(buffer, gb.Stride)
 
-	/*
-	  RFBG, width, height, stride,
-	  format, usage, 0x2a [mId >> 32?], [some kind of native handle thing?] [v38 points here] [mId & 0xFFFFFFFF] index
-	  0x0 [numFds?], 0x51 [numInts?], -1 {592}, gpu_buffer_id {593},
-	  0x0, 0xdaffcaff {582}, -1 [0x2a?] {583}, v39 [0x0] {584},
-	  v5 [0xb00] {585}, v4 [0x1] {586}, v4 [0x1] {587}, 0 [0x500] {588}
-	  v31 [0x3c0000] {589}, v22 [0x1] {590}, uninit?,
-	  memcpied from &v53, length 88 * v22
-	  zeroes? {581 clears from v38+12 to the end of this block}
-	  0x0 {594}, 0x0 {594}
-	*/
+	buffer = append(buffer, uint32(gb.Format))
+	buffer = append(buffer, gb.Usage)
+	buffer = append(buffer, 42)
+	buffer = append(buffer, 0)
 
-	template := []uint32{
-		0x47424652, gb.Width, gb.Height, gb.Stride,
-		uint32(gb.Format), gb.Usage, 0x0000002a, uint32(gb.Index),
-		0x00000000, 0x00000051, 0xffffffff, gpuBufferId,
-		0x00000000, 0xdaffcaff, 0x0000002a, 0x00000000,
-		0x00000b00, 0x00000001, 0x00000001, 0x00000500,
-		0x003c0000, 0x00000001, 0x00000000, 0x00000500,
-		0x000002d0, 0x00532120, 0x00000001, 0x00000003,
-		0x00001400, gpuBufferCopy.NvMapHandle, gb.PixelBufferOffset, 0x000000fe,
-		0x00000004, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x003c0000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x00000000, 0x00000000, 0x00000000,
-		0x00000000, 0x0, 0x0, // these last two words are some kind of address but I don't think it really matters
+	buffer = append(buffer, 0)
+	buffer = append(buffer, uint32(gb.GRBuff.Header.NumInts))
+
+	buffer = append(buffer, uint32(gb.GRBuff.Unk0))
+	buffer = append(buffer, uint32(gb.GRBuff.NVMapID))
+	buffer = append(buffer, gb.GRBuff.Unk2)
+	buffer = append(buffer, gb.GRBuff.Magic)
+	buffer = append(buffer, gb.GRBuff.PID)
+	buffer = append(buffer, gb.GRBuff.Type)
+	buffer = append(buffer, gb.GRBuff.Usage)
+	buffer = append(buffer, gb.GRBuff.Format)
+	buffer = append(buffer, gb.GRBuff.ExtFormat)
+	buffer = append(buffer, gb.GRBuff.Stride)
+	buffer = append(buffer, gb.GRBuff.TotalSize)
+	buffer = append(buffer, gb.GRBuff.NumPlanes)
+	buffer = append(buffer, gb.GRBuff.Unk12)
+
+	planeSize := (uint32(unsafe.Sizeof(gb.GRBuff.Planes[0])) / 4) * 3
+	planeBuff := make([]uint32, planeSize)
+	internal.Memcpy(unsafe.Pointer(&planeBuff[0]), unsafe.Pointer(&gb.GRBuff.Planes), unsafe.Sizeof(gb.GRBuff.Planes))
+
+	for i := uint32(0); i < planeSize; i++ {
+		buffer = append(buffer, planeBuff[i])
 	}
-	p.WriteInPlaceU32(template)
+	buffer = append(buffer, 0)
+	buffer = append(buffer, 0)
+
+	p.WriteU32(uint32(len(buffer) * 4))
+	p.WriteU32(0)
+	p.WriteInPlaceU32(buffer)
 
 	return nil
 }
